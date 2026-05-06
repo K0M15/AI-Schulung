@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molkerei Manager Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --success: #10b981;
+            --success-hover: #059669;
+            --info: #3b82f6;
+            --info-hover: #2563eb;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e1b4b;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .round-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border: 1px solid var(--card-border);
+        }
+
+        /* Progress Bar */
+        .budget-container {
+            margin-bottom: 2.5rem;
+        }
+
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 0.75rem;
+        }
+
+        .budget-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .budget-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--success);
+        }
+
+        .progress-bar-bg {
+            height: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 999px;
+            width: 10%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Stations Grid */
+        .stations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .station-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .station-img-wrapper {
+            position: relative;
+            height: 160px;
+            width: 100%;
+            background: #000;
+        }
+
+        .station-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+
+        .station-card:hover .station-img-wrapper img {
+            opacity: 1;
+        }
+
+        .station-progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .station-progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        #progress-buy { background: var(--info); box-shadow: 0 0 10px var(--info); }
+        #progress-produce { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        #progress-sell { background: var(--success); box-shadow: 0 0 10px var(--success); }
+
+        .station-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .station-content h3 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: auto;
+        }
+
+        button span.subtext {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        button:hover:not(:disabled)::after {
+            opacity: 1;
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            filter: grayscale(100%);
+        }
+
+        .btn-buy { background: var(--info); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-buy:hover:not(:disabled) { background: var(--info-hover); }
+
+        .btn-produce { background: var(--primary); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
+        .btn-produce:hover:not(:disabled) { background: var(--primary-hover); }
+
+        .btn-sell { background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-sell:hover:not(:disabled) { background: var(--success-hover); }
+
+        .btn-next-round {
+            width: 100%;
+            background: var(--warning);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            font-size: 1.125rem;
+            padding: 1.25rem 1rem;
+            flex-direction: row;
+            justify-content: center;
+        }
+        .btn-next-round:hover { background: var(--warning-hover); }
+
+        /* Event Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 50;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-gradient-start);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 450px;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .event-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .event-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .event-desc {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn-modal {
+            background: white;
+            color: black;
+            width: 100%;
+            font-size: 1rem;
+            flex-direction: row;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .btn-modal:hover {
+            background: #f1f5f9;
+        }
+
+        /* Floating text animation for money/resources */
+        .floating-text {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.25rem;
+            pointer-events: none;
+            animation: floatUp 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Molkerei Manager</h1>
+            <div class="round-badge">Tag <span id="round-display">1</span> beendet</div>
+        </header>
+
+        <div class="budget-container">
+            <div class="budget-header">
+                <div class="budget-title">Firmenbudget (Ziel: 10.000 €)</div>
+                <div class="budget-amount" id="budget-display">1.000,00 €</div>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="budget-progress"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="milk-display">0</div>
+                <div class="stat-label">Liter Milch</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pudding-display">0</div>
+                <div class="stat-label">Schokopudding</div>
+            </div>
+        </div>
+
+        <div class="stations">
+            <!-- Milk Station -->
+            <div class="station-card">
+                <div class="station-img-wrapper">
+                    <img src="milk.png" alt="Milchankauf">
+                    <div class="station-progress-bar">
+                        <div class="station-progress-fill" id="progress-buy"></div>
+                    </div>
+                </div>
+                <div class="station-content">
+                    <h3>Rohmilch Ankauf</h3>
+                    <button class="btn-buy" onclick="startBuyMilk(event)" id="btn-buy">
+                        Milch ankaufen
+                        <span class="subtext">Dauer: 2s | 100 L für 30,00 €</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Factory Station -->
+            <div class="station-card">
+                <div class="station-img-wrapper">
+                    <img src="factory.png" alt="Pudding Fabrik">
+                    <div class="station-progress-bar">
+                        <div class="station-progress-fill" id="progress-produce"></div>
+                    </div>
+                </div>
+                <div class="station-content">
+                    <h3>Produktion</h3>
+                    <button class="btn-produce" onclick="startProducePudding(event)" id="btn-produce">
+                        Pudding produzieren
+                        <span class="subtext">Dauer: 3s | Kosten: 0,52 € / Stück</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Market Station -->
+            <div class="station-card">
+                <div class="station-img-wrapper">
+                    <img src="market.png" alt="Verkaufsmarkt">
+                    <div class="station-progress-bar">
+                        <div class="station-progress-fill" id="progress-sell"></div>
+                    </div>
+                </div>
+                <div class="station-content">
+                    <h3>Logistik & Verkauf</h3>
+                    <button class="btn-sell" onclick="startSellPudding(event)" id="btn-sell">
+                        Produkte verkaufen
+                        <span class="subtext">Dauer: 2s | Erlös: 1,10 € / Stück</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-next-round" onclick="nextRound()">
+            Tagesabschluss (Runde beenden)
+        </button>
+    </div>
+
+    <!-- Event Modal -->
+    <div class="modal-overlay" id="event-modal">
+        <div class="modal-content">
+            <div class="event-icon" id="event-icon">⚡</div>
+            <div class="event-title" id="event-title">Zufallsereignis!</div>
+            <div class="event-desc" id="event-desc">Etwas unerwartetes ist passiert.</div>
+            <button class="btn-modal" onclick="closeModal()">Verstanden</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let state = {
+            budget: 1000.00,
+            milk: 0,
+            pudding: 0,
+            round: 1,
+            targetBudget: 10000.00,
+            isBusy: {
+                buy: false,
+                produce: false,
+                sell: false
+            }
+        };
+
+        const COSTS = {
+            milkBatch: 30.00, 
+            milkAmount: 100,
+            produceUnit: 0.52,
+            sellPrice: 1.10
+        };
+
+        const EVENTS = [
+            {
+                title: "Stromausfall!",
+                icon: "⚡",
+                desc: "Die Kühlung ist ausgefallen. 50% deiner Milch ist leider sauer geworden.",
+                effect: () => {
+                    let lost = Math.floor(state.milk * 0.5);
+                    state.milk -= lost;
+                }
+            },
+            {
+                title: "Großauftrag von Lidl!",
+                icon: "🛒",
+                desc: "Ein lokaler Supermarkt zahlt dir einen Investitionsbonus von 500,00 €.",
+                effect: () => { state.budget += 500; }
+            },
+            {
+                title: "Maschinenschaden!",
+                icon: "🔧",
+                desc: "Die Abfüllanlage ist defekt. Die Reparatur kostet dich 200,00 €.",
+                effect: () => { state.budget -= 200; }
+            },
+            {
+                title: "Gute Kuh-Ernte!",
+                icon: "🐄",
+                desc: "Die Kühe der regionalen Bauern geben heute besonders viel. Du erhältst 200 L Milch geschenkt!",
+                effect: () => { state.milk += 200; }
+            },
+            {
+                title: "Viraler TikTok Hit!",
+                icon: "📱",
+                desc: "Jemand hat deinen Schokopudding gepostet! Spontane Verkäufe bringen 300,00 € ein.",
+                effect: () => { state.budget += 300; }
+            }
+        ];
+
+        // Formatters
+        const formatMoney = (amount) => {
+            return amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+        };
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('budget-display').innerText = formatMoney(state.budget);
+            document.getElementById('milk-display').innerText = state.milk;
+            document.getElementById('pudding-display').innerText = state.pudding;
+            document.getElementById('round-display').innerText = state.round;
+
+            // Progress Bar
+            let progress = (state.budget / state.targetBudget) * 100;
+            if (progress > 100) progress = 100;
+            if (progress < 0) progress = 0;
+            document.getElementById('budget-progress').style.width = `${progress}%`;
+
+            // Button States
+            document.getElementById('btn-buy').disabled = state.isBusy.buy || state.budget < COSTS.milkBatch;
+            document.getElementById('btn-produce').disabled = state.isBusy.produce || state.milk <= 0 || state.budget < COSTS.produceUnit;
+            document.getElementById('btn-sell').disabled = state.isBusy.sell || state.pudding <= 0;
+        }
+
+        // Floating Animation
+        function showFloatingText(x, y, text, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.style.left = x + 'px';
+            el.style.top = (y - 20) + 'px';
+            el.style.color = color;
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+
+        // Action Timer
+        function startActionTimer(type, durationMs, callback) {
+            state.isBusy[type] = true;
+            updateUI();
+            
+            const progressFill = document.getElementById('progress-' + type);
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const percent = Math.min((elapsed / durationMs) * 100, 100);
+                
+                progressFill.style.width = percent + '%';
+
+                if (percent < 100) {
+                    requestAnimationFrame(animate);
+                } else {
+                    state.isBusy[type] = false;
+                    progressFill.style.width = '0%';
+                    callback();
+                    updateUI();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Actions
+        function startBuyMilk(e) {
+            if (state.budget >= COSTS.milkBatch && !state.isBusy.buy) {
+                // Deduct cost immediately
+                state.budget -= COSTS.milkBatch;
+                showFloatingText(e.clientX, e.clientY, '-30,00 €', '#ef4444');
+                
+                // Start Timer
+                startActionTimer('buy', 2000, () => {
+                    state.milk += COSTS.milkAmount;
+                    const btn = document.getElementById('btn-buy');
+                    const rect = btn.getBoundingClientRect();
+                    showFloatingText(rect.left + rect.width / 2, rect.top, '+100 L', '#3b82f6');
+                });
+            }
+        }
+
+        function startProducePudding(e) {
+            if (state.milk > 0 && state.budget >= COSTS.produceUnit && !state.isBusy.produce) {
+                let maxByBudget = Math.floor(state.budget / COSTS.produceUnit);
+                let amountToProduce = Math.min(state.milk, maxByBudget);
+                
+                if (amountToProduce > 0) {
+                    // Deduct resources immediately
+                    let cost = amountToProduce * COSTS.produceUnit;
+                    state.budget -= cost;
+                    state.milk -= amountToProduce;
+                    showFloatingText(e.clientX, e.clientY, '-' + formatMoney(cost), '#ef4444');
+                    
+                    // Start Timer
+                    startActionTimer('produce', 3000, () => {
+                        state.pudding += amountToProduce;
+                        const btn = document.getElementById('btn-produce');
+                        const rect = btn.getBoundingClientRect();
+                        showFloatingText(rect.left + rect.width / 2, rect.top, '+' + amountToProduce + ' Pudding', '#8b5cf6');
+                    });
+                }
+            }
+        }
+
+        function startSellPudding(e) {
+            if (state.pudding > 0 && !state.isBusy.sell) {
+                let amountToSell = state.pudding;
+                // Empty stock immediately to avoid double selling
+                state.pudding = 0;
+                
+                // Start Timer
+                startActionTimer('sell', 2000, () => {
+                    let revenue = amountToSell * COSTS.sellPrice;
+                    state.budget += revenue;
+                    const btn = document.getElementById('btn-sell');
+                    const rect = btn.getBoundingClientRect();
+                    showFloatingText(rect.left + rect.width / 2, rect.top, '+' + formatMoney(revenue), '#10b981');
+                    
+                    if (state.budget >= state.targetBudget) {
+                        setTimeout(() => triggerWin(), 500);
+                    }
+                });
+            }
+        }
+
+        function nextRound() {
+            state.round++;
+            updateUI();
+            
+            if (state.round % 5 === 0) {
+                triggerRandomEvent();
+            }
+        }
+
+        // Events
+        function triggerRandomEvent() {
+            const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+            event.effect();
+            
+            document.getElementById('event-icon').innerText = event.icon;
+            document.getElementById('event-title').innerText = event.title;
+            document.getElementById('event-desc').innerText = event.desc;
+            
+            document.getElementById('event-modal').classList.add('active');
+            updateUI();
+        }
+
+        function triggerWin() {
+            document.getElementById('event-icon').innerText = "🏆";
+            document.getElementById('event-title').innerText = "Ziel Erreicht!";
+            document.getElementById('event-desc').innerText = "Herzlichen Glückwunsch! Du hast das Ziel von 10.000 € erreicht und bist ein Meister-Molkerei-Manager.";
+            document.getElementById('event-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('event-modal').classList.remove('active');
+        }
+
+        // Init
+        updateUI();
+
+    </script>
+</body>
+</html>

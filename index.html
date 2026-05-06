@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI-Schulung Game Hub</title>
+    <meta name="description" content="Eine Übersicht der Spiele, die während der KI-Schulungen entstanden sind.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>AI Game Hub</h1>
+        <p class="subtitle">Entdecke die Spiele, die in unseren KI-Schulungen entwickelt wurden. Jedes Projekt demonstriert die kreative Zusammenarbeit zwischen Mensch und Künstlicher Intelligenz.</p>
+    </header>
+
+    <main class="game-grid">
+        <!-- Game 1: Catch Game -->
+        <a href="Spiel Gruppe 1/catch_game.html" class="game-card" id="game-catch">
+            <div class="card-image-container">
+                <img src="assets/catch_game.png" alt="Catch Game Preview" class="card-image">
+            </div>
+            <div class="card-content">
+                <span class="card-tag">Arcade</span>
+                <h2 class="card-title">Catch Game</h2>
+                <p class="card-description">Ein klassisches Arcade-Spiel, bei dem du Früchte fangen musst. Entstanden in der ersten Session.</p>
+            </div>
+        </a>
+
+        <!-- Game 2: Dairy Manager -->
+        <a href="Spiel Gruppe 2/dairy_manager.html" class="game-card" id="game-dairy">
+            <div class="card-image-container">
+                <img src="assets/dairy_manager.png" alt="Dairy Manager Preview" class="card-image">
+            </div>
+            <div class="card-content">
+                <span class="card-tag">Simulation</span>
+                <h2 class="card-title">Dairy Manager</h2>
+                <p class="card-description">Verwalte deine eigene Molkerei, optimiere die Produktion und maximiere deinen Profit.</p>
+            </div>
+        </a>
+
+        <!-- Presentation -->
+        <a href="Präsentation/KI – Deine neue Superkraft im Wandel.pptx" download class="game-card" id="presentation-download">
+            <div class="card-image-container">
+                <img src="assets/presentation.png" alt="Presentation Preview" class="card-image">
+            </div>
+            <div class="card-content">
+                <span class="card-tag">Unterlagen</span>
+                <h2 class="card-title">KI – Deine neue Superkraft</h2>
+                <p class="card-description">Die vollständige Präsentation zur Schulung als Download (PPTX).</p>
+            </div>
+        </a>
+
+        <!-- Placeholder for future games -->
+        <div class="game-card" style="opacity: 0.5; cursor: default; border-style: dashed;">
+            <div class="card-image-container" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%; position: absolute;">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted)"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+            <div class="card-content" style="margin-top: 56.25%;">
+                <span class="card-tag">Coming Soon</span>
+                <h2 class="card-title" style="color: var(--text-muted)">Nächstes Spiel</h2>
+                <p class="card-description">Hier erscheint bald das nächste Ergebnis unserer Schulung.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 KI-Schulung Portfolio. Erstellt mit Unterstützung von KI.</p>
+        <p style="margin-top: 1rem; font-weight: 600;">Kontakt: <a href="mailto:alain.felger93@googlemail.com" style="color: var(--primary); text-decoration: none;">alain.felger93@googlemail.com</a></p>
+    </footer>
+
+    <script>
+        // Add a nice ripple effect or simple console log for tracking
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (card.hasAttribute('href')) {
+                    console.log('Starting game:', card.querySelector('.card-title').innerText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
