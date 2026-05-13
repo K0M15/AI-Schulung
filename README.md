@@ -2,6 +2,8 @@
 
 Dieses Projekt entstand im Rahmen eines optionalen Schulungstags bei **Landliebe** nach dem 4. Mai 2026. Es dient als Einstieg in die Welt der Künstlichen Intelligenz (KI) und zeigt auf, wie moderne KI-Tools genutzt werden können, um kleine Web-Anwendungen und Spiele von Grund auf zu entwickeln.
 
+[Link zur Webseite](https://k0m15.github.io/AI-Schulung/)
+
 ## Über das Projekt
 
 Ziel dieser Schulung war es, ein grundlegendes Verständnis für die Zusammenarbeit zwischen Mensch und KI zu schaffen. Dabei lag der Fokus darauf, wie man durch präzises "Prompt Engineering" und iterative Entwicklung funktionsfähige Prototypen erstellt.
