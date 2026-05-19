@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Bürokratie DOOM (1993 Style)</title>
+    <style>
+        /* Retro-Schriftart laden */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Press Start 2P', monospace; 
+            user-select: none; 
+        }
+        
+        /* Erzwinge den pixeligen Look durch Deaktivierung der Kantenglättung */
+        #gameCanvas { 
+            width: 100vw; 
+            height: 100vh; 
+            image-rendering: pixelated; 
+            image-rendering: crisp-edges; 
+        }
+        
+        /* HUD-Styling im Retro-Look */
+        #hud { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 80px; 
+            background: #333; 
+            border-top: 4px solid #777; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            box-shadow: inset 0 4px 0 #222; 
+            z-index: 5; 
+        }
+        .hud-box { 
+            background: #000; 
+            padding: 10px; 
+            border: 4px inset #666; 
+            min-width: 18 0px; 
+            text-align: center; 
+            font-size: 16px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        .hud-label { color: #aaa; font-size: 12px; }
+        .hud-val { color: #fff; text-shadow: 2px 2px 0 #f00; font-size: 20px; }
+        #scoreVal { text-shadow: 2px 2px 0 #aa0; }
+        #ammoVal { text-shadow: 2px 2px 0 #0aa; }
+        
+        /* Waffe (animiertes Emoji) */
+        #weapon { 
+            position: absolute; 
+            bottom: 60px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            font-size: 180px; 
+            line-height: 1; 
+            animation: idle 2s infinite alternate; 
+            z-index: 4; 
+            filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.5)); 
+            pointer-events: none;
+        }
+        @keyframes idle { 
+            from { transform: translate(-50%, 0) rotate(-2deg); } 
+            to { transform: translate(-50%, 10px) rotate(2deg); } 
+        }
+        .shoot-anim { animation: recoil 0.15s !important; }
+        @keyframes recoil { 
+            0% { transform: translate(-50%, 30px) rotate(5deg); } 
+            100% { transform: translate(-50%, 0) rotate(0deg); } 
+        }
+        
+        #crosshair { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            color: rgba(0,255,0,0.7); 
+            font-size: 24px; 
+            font-weight: bold; 
+            pointer-events: none; 
+            z-index: 4;
+        }
+        
+        #overlay { 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,0,0,0); 
+            pointer-events: none; 
+            transition: background 0.1s; 
+            z-index: 3;
+        }
+        
+        #startScreen { 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 10; 
+            color: white; 
+            text-align: center; 
+            cursor: pointer; 
+        }
+        h1 { color: #f00; text-shadow: 4px 4px 0 #500; font-size: 40px; margin-bottom: 20px; }
+        p { line-height: 1.8; font-size: 14px; margin-bottom: 10px; }
+        .blink { animation: blinker 1s linear infinite; margin-top: 30px; color: #ff0; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="weapon">🔫</div>
+    <div id="crosshair">+</div>
+    <div id="overlay"></div>
+    <div id="hud">
+        <div class="hud-box">
+            <span class="hud-label">GESUNDHEIT</span>
+            <span class="hud-val" id="healthVal">100%</span>
+        </div>
+        <div class="hud-box">
+            <span class="hud-label">MUNITION</span>
+            <span class="hud-val" id="ammoVal">50</span>
+        </div>
+        <div class="hud-box">
+            <span class="hud-label">PUNKTE</span>
+            <span class="hud-val" id="scoreVal">0</span>
+        </div>
+    </div>
+    <div id="startScreen">
+        <h1>BÜROKRATIE DOOM</h1>
+        <p>Ein Retro-FPS Erlebnis (1993 Style)</p>
+        <p>Bewegung: W A S D | Umsehen: Maus | Schießen: Klick / Leertaste</p>
+        <p style="color: #ffaa55; margin-top: 20px;">Die "Bösen": Mäuse 🐀, Colibakterien 🦠, Auditoren 🕴️</p>
+        <p style="color: #55ffaa;">Die "Guten": Milch 🥛, Joghurt 🥣, Butter 🧈</p>
+        <p class="blink">KLICKE HIER UM ZU STARTEN</p>
+    </div>
+
+    <!-- Einbindung von Three.js via CDN für schnelles 3D-Rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- 1. INITIALISIERUNG ---
+        const canvas = document.getElementById('gameCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+        
+        // Rendern mit sehr niedriger Auflösung (wie 1993), das CSS skaliert es pixelig hoch
+        const RENDER_WIDTH = 320;
+        const RENDER_HEIGHT = 200;
+        renderer.setSize(RENDER_WIDTH, RENDER_HEIGHT, false);
+        renderer.setClearColor(0x111111);
+
+        const scene = new THREE.Scene();
+        // Nebel für die düstere Labyrinth-Atmosphäre
+        scene.fog = new THREE.Fog(0x111111, 2, 12); 
+
+        const camera = new THREE.PerspectiveCamera(75, RENDER_WIDTH / RENDER_HEIGHT, 0.1, 100);
+        const startScreen = document.getElementById('startScreen');
+        const overlay = document.getElementById('overlay');
+        const weapon = document.getElementById('weapon');
+
+        // --- 2. SPIELSTATUS ---
+        let health = 100;
+        let ammo = 50;
+        let score = 0;
+        let isLocked = false;
+        
+        function updateHUD() {
+            document.getElementById('healthVal').innerText = health + '%';
+            document.getElementById('ammoVal').innerText = ammo;
+            document.getElementById('scoreVal').innerText = score;
+        }
+
+        // --- 3. TEXTUREN & SPRITES GENERIERUNG ---
+        // Generiert Texturen programmatisch, um externe Bilder zu vermeiden
+        function createTexture(type, text, bgColor) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 64;
+            tempCanvas.height = 64;
+            const ctx = tempCanvas.getContext('2d');
+            
+            if (type === 'wall') {
+                // Einfaches Wandmuster (Mauerwerk)
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, 64, 64);
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                for(let i=0; i<64; i+=16) {
+                    ctx.fillRect(0, i, 64, 2);
+                    ctx.fillRect(i + (i%32===0?0:8), i, 2, 16);
+                }
+            } else if (type === 'floor') {
+                // Rauscheffekt für den Boden
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, 64, 64);
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                for(let i=0; i<64; i+=4) {
+                    if (Math.random() > 0.5) ctx.fillRect(Math.random()*64, Math.random()*64, 4, 4);
+                }
+            } else if (type === 'sprite') {
+                // Rendert Emojis als Sprites (perfekter Single-File Workaround)
+                ctx.font = '50px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'black';
+                ctx.fillText(text, 34, 38); // Schatten
+                ctx.fillText(text, 32, 36); 
+            }
+            
+            const tex = new THREE.CanvasTexture(tempCanvas);
+            // NearestFilter verhindert weiche Kanten und erzeugt Pixel-Art-Look
+            tex.magFilter = THREE.NearestFilter; 
+            tex.minFilter = THREE.NearestFilter;
+            return tex;
+        }
+
+        const wallTex = createTexture('wall', '', '#552222');
+        const floorTex = createTexture('floor', '', '#333333');
+        
+        // Definition der Entitäten nach Benutzer-Vorgaben
+        const enemyTypes = [
+            { name: 'Maus', icon: '🐀', speed: 2.5, hp: 1 },
+            { name: 'Coli', icon: '🦠', speed: 1.5, hp: 2 },
+            { name: 'Auditor', icon: '🕴️', speed: 1.0, hp: 4 }
+        ];
+        
+        const itemTypes = [
+            { name: 'Milch', icon: '🥛', points: 10, heal: 10, ammo: 0 },
+            { name: 'Joghurt', icon: '🥣', points: 20, heal: 20, ammo: 0 },
+            { name: 'Butter', icon: '🧈', points: 5, heal: 0, ammo: 15 }
+        ];
+
+        const enemyMaterials = enemyTypes.map(e => new THREE.SpriteMaterial({ map: createTexture('sprite', e.icon) }));
+        const itemMaterials = itemTypes.map(i => new THREE.SpriteMaterial({ map: createTexture('sprite', i.icon) }));
+        const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+        // --- 4. KARTEN-AUFBAU (LABYRINTH) ---
+        // 1 = Wand, 0 = Leer
+        const map = [
+            "11111111111111111111",
+            "10000000100000000001",
+            "10111110101111111101",
+            "10100000000000000101",
+            "10101111111111110101",
+            "10001000000000010001",
+            "11111011101111111111",
+            "10000010000001000001",
+            "10111110111101111101",
+            "10100000010000000101",
+            "10101111010111110101",
+            "10001000000000010001",
+            "11111011111111011111",
+            "10000000000000000001",
+            "11111111111111111111"
+        ];
+        
+        const TILE_SIZE = 2;
+        const walls = []; // Array für Kollisionsboxen
+        const enemies = [];
+        const items = [];
+        const bullets = [];
+
+        // Erstelle 3D Blöcke für die Wände
+        const geoWall = new THREE.BoxGeometry(TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        const matWall = new THREE.MeshBasicMaterial({ map: wallTex });
+        
+        for (let y = 0; y < map.length; y++) {
+            for (let x = 0; x < map[y].length; x++) {
+                if (map[y][x] === '1') {
+                    const mesh = new THREE.Mesh(geoWall, matWall);
+                    mesh.position.set(x * TILE_SIZE, TILE_SIZE/2, y * TILE_SIZE);
+                    scene.add(mesh);
+                    walls.push(new THREE.Box3().setFromObject(mesh));
+                } else if (map[y][x] === '0') {
+                    // Zufälliges Spawnen am Start
+                    if (Math.random() < 0.05 && (x !== 1 || y !== 1)) spawnEnemy(x * TILE_SIZE, y * TILE_SIZE);
+                    if (Math.random() < 0.03 && (x !== 1 || y !== 1)) spawnItem(x * TILE_SIZE, y * TILE_SIZE);
+                }
+            }
+        }
+
+        // Boden & Decke
+        const geoFloor = new THREE.PlaneGeometry(map[0].length * TILE_SIZE, map.length * TILE_SIZE);
+        geoFloor.rotateX(-Math.PI / 2);
+        const matFloor = new THREE.MeshBasicMaterial({ map: floorTex });
+        const floorMesh = new THREE.Mesh(geoFloor, matFloor);
+        floorMesh.position.set((map[0].length * TILE_SIZE)/2 - TILE_SIZE/2, 0, (map.length * TILE_SIZE)/2 - TILE_SIZE/2);
+        scene.add(floorMesh);
+
+        const matCeil = new THREE.MeshBasicMaterial({ color: 0x222222 });
+        const ceilMesh = new THREE.Mesh(geoFloor, matCeil);
+        ceilMesh.position.set((map[0].length * TILE_SIZE)/2 - TILE_SIZE/2, TILE_SIZE, (map.length * TILE_SIZE)/2 - TILE_SIZE/2);
+        scene.add(ceilMesh);
+
+        // --- 5. SPIELER & STEUERUNG ---
+        const pitch = new THREE.Object3D();
+        pitch.add(camera);
+        const yaw = new THREE.Object3D();
+        yaw.position.set(1 * TILE_SIZE, 0.5, 1 * TILE_SIZE); // Startposition
+        yaw.add(pitch);
+        scene.add(yaw);
+
+        // PointerLock für echtes FPS-Feeling
+        startScreen.addEventListener('click', () => {
+            if (!isLocked) document.body.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isLocked = document.pointerLockElement === document.body;
+            startScreen.style.display = isLocked ? 'none' : 'flex';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isLocked) return;
+            yaw.rotation.y -= e.movementX * 0.003;
+            pitch.rotation.x -= e.movementY * 0.003;
+            // Begrenze Sicht nach oben/unten
+            pitch.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch.rotation.x));
+        });
+
+        const keys = {};
+        document.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if (e.code === 'Space' && isLocked) shoot();
+        });
+        document.addEventListener('keyup', e => keys[e.code] = false);
+        document.addEventListener('mousedown', e => {
+            if (e.button === 0 && isLocked) shoot(); // Linksklick
+        });
+
+        // --- 6. ENTITÄTEN-LOGIK ---
+
+        function spawnEnemy(x, z) {
+            const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+            const sprite = new THREE.Sprite(enemyMaterials[enemyTypes.indexOf(type)]);
+            sprite.scale.set(1.5, 1.5, 1.5);
+            sprite.position.set(x, 0.75, z);
+            scene.add(sprite);
+            enemies.push({ mesh: sprite, type: type, hp: type.hp });
+        }
+
+        function spawnItem(x, z) {
+            const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+            const sprite = new THREE.Sprite(itemMaterials[itemTypes.indexOf(type)]);
+            sprite.scale.set(1.0, 1.0, 1.0);
+            sprite.position.set(x, 0.4, z);
+            scene.add(sprite);
+            items.push({ mesh: sprite, type: type });
+        }
+
+        function shoot() {
+            if (ammo <= 0) return;
+            ammo--;
+            updateHUD();
+            
+            // Waffen-Animation zurücksetzen und neu starten
+            weapon.classList.remove('shoot-anim');
+            void weapon.offsetWidth; // DOM Reflow erzwingen
+            weapon.classList.add('shoot-anim');
+            
+            // Bildschirm-Blitz
+            overlay.style.background = 'rgba(255, 255, 0, 0.1)';
+            setTimeout(() => overlay.style.background = 'rgba(255, 0, 0, 0)', 50);
+
+            // Projektil erstellen
+            const geo = new THREE.SphereGeometry(0.05, 4, 4);
+            const bullet = new THREE.Mesh(geo, bulletMaterial);
+            bullet.position.copy(yaw.position);
+            bullet.position.y += pitch.position.y;
+            
+            // Richtung berechnen
+            const dir = new THREE.Vector3(0, 0, -1);
+            dir.applyQuaternion(pitch.quaternion);
+            dir.applyQuaternion(yaw.quaternion);
+            
+            scene.add(bullet);
+            bullets.push({ mesh: bullet, dir: dir, life: 1.5 });
+        }
+
+        function checkCollision(pos) {
+            const pBox = new THREE.Box3().setFromCenterAndSize(pos, new THREE.Vector3(0.5, 0.5, 0.5));
+            for (let w of walls) {
+                if (pBox.intersectsBox(w)) return true;
+            }
+            return false;
+        }
+
+        function damagePlayer(amount) {
+            health -= amount;
+            updateHUD();
+            overlay.style.background = 'rgba(255, 0, 0, 0.4)'; // Rot-Flash bei Schaden
+            setTimeout(() => overlay.style.background = 'rgba(255, 0, 0, 0)', 150);
+            
+            if (health <= 0) {
+                document.exitPointerLock();
+                alert(`GAME OVER!\nDie Bürokratie hat dich besiegt.\nDein Score: ${score}`);
+                location.reload(); // Neustart
+            }
+        }
+
+        // Kontinuierliches Spawnen von Gegnern (z.B. im Labyrinth)
+        setInterval(() => {
+            if (isLocked && enemies.length < 15) { // Maximal 15 Gegner gleichzeitig
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * map[0].length);
+                    y = Math.floor(Math.random() * map.length);
+                } while(map[y][x] !== '0');
+                spawnEnemy(x * TILE_SIZE, y * TILE_SIZE);
+            }
+        }, 4000); // Alle 4 Sekunden
+
+        // --- 7. GAME LOOP ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            
+            if (!isLocked) return;
+
+            // Spielerbewegung
+            const speed = 4.0 * dt;
+            const dir = new THREE.Vector3();
+            
+            if (keys['KeyW']) dir.z -= 1;
+            if (keys['KeyS']) dir.z += 1;
+            if (keys['KeyA']) dir.x -= 1;
+            if (keys['KeyD']) dir.x += 1;
+            
+            if (dir.lengthSq() > 0) {
+                dir.normalize();
+                dir.applyQuaternion(yaw.quaternion);
+                
+                const oldPos = yaw.position.clone();
+                // X-Kollision
+                yaw.position.x += dir.x * speed;
+                if (checkCollision(yaw.position)) yaw.position.x = oldPos.x;
+                
+                // Z-Kollision
+                yaw.position.z += dir.z * speed;
+                if (checkCollision(yaw.position)) yaw.position.z = oldPos.z;
+                
+                // Kamera-Wackeln (Head Bobbing) beim Laufen
+                pitch.position.y = Math.sin(clock.elapsedTime * 12) * 0.08;
+            } else {
+                pitch.position.y = 0;
+            }
+
+            // Projektile aktualisieren
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.mesh.position.addScaledVector(b.dir, 20 * dt);
+                b.life -= dt;
+                
+                let hit = false;
+                if (checkCollision(b.mesh.position)) hit = true; // Wand getroffen
+                
+                // Gegner getroffen?
+                if (!hit) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const e = enemies[j];
+                        if (b.mesh.position.distanceTo(e.mesh.position) < 0.8) {
+                            hit = true;
+                            e.hp--;
+                            if (e.hp <= 0) {
+                                scene.remove(e.mesh);
+                                score += 50;
+                                // 40% Chance, dass der Gegner einen guten Gegenstand droppt
+                                if (Math.random() < 0.4) spawnItem(e.mesh.position.x, e.mesh.position.z);
+                                enemies.splice(j, 1);
+                                updateHUD();
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                if (hit || b.life <= 0) {
+                    scene.remove(b.mesh);
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Gegner aktualisieren
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                const dist = e.mesh.position.distanceTo(yaw.position);
+                
+                // Billboard: Sprite schaut immer zum Spieler
+                e.mesh.lookAt(yaw.position);
+                
+                if (dist < 10) {
+                    // Bewegt sich auf den Spieler zu
+                    const dirToPlayer = yaw.position.clone().sub(e.mesh.position).normalize();
+                    e.mesh.position.addScaledVector(dirToPlayer, e.type.speed * dt);
+                    
+                    if (dist < 0.8) {
+                        damagePlayer(15);
+                        // Gegner leicht zurückstoßen
+                        e.mesh.position.subScaledVector(dirToPlayer, 1.5);
+                    }
+                }
+            }
+
+            // Gegenstände (Items) aktualisieren
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                // Leichtes Schweben
+                item.mesh.position.y = 0.4 + Math.sin(clock.elapsedTime * 4 + i) * 0.15; 
+                
+                if (item.mesh.position.distanceTo(yaw.position) < 1.0) {
+                    // Item eingesammelt
+                    score += item.type.points;
+                    health = Math.min(100, health + item.type.heal);
+                    ammo += item.type.ammo;
+                    updateHUD();
+                    
+                    // Flash screen grün
+                    overlay.style.background = 'rgba(0, 255, 0, 0.2)';
+                    setTimeout(() => overlay.style.background = 'rgba(0, 0, 0, 0)', 100);
+                    
+                    scene.remove(item.mesh);
+                    items.splice(i, 1);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Spiel starten
+        animate();
+    </script>
+</body>
+</html>
